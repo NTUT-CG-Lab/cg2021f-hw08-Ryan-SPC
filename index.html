@@ -113,48 +113,34 @@
       //animate();
 	  
 	  var openFile = function(event){
-		var = input =event.target.files[0];
-		var reader = new FileReader();
-		let filename = input.filename;
-		let d = file.spilt(".");
-		let m = file.spilt("_");
-		if(d[1] = "nrrd"){
-			const loader = new NRRDLoader();
-			let nrrdModel
-		}
-	  };
-
-      function init() {
-        camera = new THREE.PerspectiveCamera(
-          60,
-          window.innerWidth / window.innerHeight,
-          0.01,
-          1e10
-        );
-        camera.position.z = 300;
-
-        scene = new THREE.Scene();
-
-        scene.add(camera);
-
-        // light
-
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
-        scene.add(hemiLight);		
-		
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        dirLight.position.set(200, 200, 200);
-        scene.add(dirLight);
-
-        //nrrd model
+      var input = event.target.files[0];
+      var reader = new FileReader();
+      let filename = input.filename;
+      let d = file.spilt(".");
+      let m = file.spilt("_");
+      if(d[1] = "nrrd"){
         const loader = new NRRDLoader();
-        loader.load("models/nrrd/heart1.nrrd", function (volume) {
-          //box helper to see the extend of the volume
+        let nrrdModelName = "./model/nrrd/" + filename;
+        loader.load(nrrdModelName, function(volume){
+            // box helper
           const geometry = new THREE.BoxGeometry(
             volume.xLength,
             volume.yLength,
             volume.zLength
           );
+
+          if (modelCount != 0){
+            scene.remove(box);
+            scene.remove(cube);
+          }
+
+          const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          const cube = new THREE.Mesh(geometry, material);
+          cube.visible = false;
+          const box = new THREE.BoxHelper(cube);
+          scene.add(box);
+          box.applyMatrix4(volume.matrix);
+          scene.add(cube);
 
           //z plane
           const sliceZ = volume.extractSlice(
@@ -195,16 +181,42 @@
             .onChange(function () {
               sliceZ.repaint.call(sliceZ);
             });
-
-          //box border
-          const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-          const cube = new THREE.Mesh(geometry, material);
-          cube.visible = false;
-          const box = new THREE.BoxHelper(cube);
-          scene.add(box);
-          box.applyMatrix4(volume.matrix);
-          scene.add(cube);
         });
+		  }
+
+      if (modelCount == 0){
+        gui = new GUI();
+      } else {
+        gui.domElement.remove();
+        scene.remove(sliceX.mesh)
+        scene.remove(sliceY.mesh)
+        scene.remove(sliceZ.mesh)
+        gui = new GUI();
+      }
+      modelCount++;
+	  };
+
+      function init() {
+        camera = new THREE.PerspectiveCamera(
+          60,
+          window.innerWidth / window.innerHeight,
+          0.01,
+          1e10
+        );
+        camera.position.z = 300;
+
+        scene = new THREE.Scene();
+
+        scene.add(camera);
+
+        // light
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
+        scene.add(hemiLight);		
+		
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(200, 200, 200);
+        scene.add(dirLight);
 
         // renderer
 
@@ -282,7 +294,13 @@
         axes2 = new THREE.AxesHelper(100);
         scene2.add(axes2);
       }
-	  window.onload
+	  window.onload = function(){
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", openFile);
+      init()
+      animate()
+    };
     </script>
     <div id="inset"></div>
   </body>
